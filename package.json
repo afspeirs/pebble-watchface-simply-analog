@@ -1,0 +1,27 @@
+{
+    "author": "AFSpeirs",
+    "dependencies": {},
+    "keywords": [],
+    "name": "simply-analog",
+    "pebble": {
+        "capabilities": [
+            ""
+        ],
+        "displayName": "Simply Analog WIP",
+        "enableMultiJS": true,
+        "messageKeys": [],
+        "projectType": "native",
+        "resources": {
+            "media": []
+        },
+        "sdkVersion": "3",
+        "targetPlatforms": [
+            "basalt"
+        ],
+        "uuid": "6c157e34-9454-41fb-92a8-db3effcfdcfa",
+        "watchapp": {
+            "watchface": true
+        }
+    },
+    "version": "0.2.0"
+}
