@@ -3,11 +3,11 @@
 
 static Window *window;
 static Layer *s_simple_bg_layer, *s_date_layer, *s_hands_layer;
-static TextLayer *s_day_label;
+static TextLayer *s_weekday_label, *s_day_label;
 
 static GPath *s_tick_paths[NUM_CLOCK_TICKS];
 static GPath *s_minute_arrow, *s_hour_arrow;
-static char s_day_buffer[16];
+static char s_weekday_buffer[16], s_day_buffer[16];
 
 static void bg_update_proc(Layer *layer, GContext *ctx) {
 	graphics_context_set_fill_color(ctx, GColorBlack);
@@ -26,7 +26,7 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
 
 	// minute/hour hand
 	graphics_context_set_fill_color(ctx, GColorWhite);
-	graphics_context_set_stroke_color(ctx, GColorBlack);
+	graphics_context_set_stroke_color(ctx, gcolor_legible_over(GColorWhite));
 
 	gpath_rotate_to(s_minute_arrow, TRIG_MAX_ANGLE * t->tm_min / 60);
 	gpath_draw_filled(ctx, s_minute_arrow);
@@ -37,7 +37,7 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
 	gpath_draw_outline(ctx, s_hour_arrow);
 
 	// dot in the middle
-	graphics_context_set_fill_color(ctx, GColorBlack);
+	graphics_context_set_fill_color(ctx, GColorWhite);
 	graphics_fill_rect(ctx, GRect(bounds.size.w / 2 - 1, bounds.size.h / 2 - 1, 3, 3), 0, GCornerNone);
 }
 
@@ -45,7 +45,10 @@ static void date_update_proc(Layer *layer, GContext *ctx) {
 	time_t now = time(NULL);
 	struct tm *t = localtime(&now);
 
-	strftime(s_day_buffer, sizeof(s_day_buffer), "%A %d", t);
+	strftime(s_weekday_buffer, sizeof(s_weekday_buffer), "%A", t);
+	text_layer_set_text(s_weekday_label, s_weekday_buffer);
+	
+	strftime(s_day_buffer, sizeof(s_day_buffer), "%d", t);
 	text_layer_set_text(s_day_label, s_day_buffer);
 }
 
@@ -64,16 +67,29 @@ static void window_load(Window *window) {
 	s_date_layer = layer_create(bounds);
 	layer_set_update_proc(s_date_layer, date_update_proc);
 	layer_add_child(window_layer, s_date_layer);
+	
+// Weekday
+	s_weekday_label = text_layer_create(GRect(10, 105, bounds.size.w - 20, 30));			//Change me
+	text_layer_set_text(s_weekday_label, s_weekday_buffer);
+	text_layer_set_text_alignment(s_weekday_label, GTextAlignmentCenter);
+	text_layer_set_background_color(s_weekday_label, GColorBlack);
+	text_layer_set_text_color(s_weekday_label, GColorWhite);
+	text_layer_set_font(s_weekday_label, fonts_get_system_font(FONT_KEY_GOTHIC_24));
 
-	s_day_label = text_layer_create(GRect(10, 114, 124, 30));
+	layer_add_child(s_date_layer, text_layer_get_layer(s_weekday_label));
+
+// Day
+	s_day_label = text_layer_create(GRect(bounds.size.w - 30, bounds.size.h / 2 - 15, 30, 30));			//Change me
 	text_layer_set_text(s_day_label, s_day_buffer);
-	text_layer_set_text_alignment(s_day_label, GTextAlignmentCenter);
+	text_layer_set_text_alignment(s_day_label, GTextAlignmentRight);
 	text_layer_set_background_color(s_day_label, GColorBlack);
 	text_layer_set_text_color(s_day_label, GColorWhite);
-	text_layer_set_font(s_day_label, fonts_get_system_font(FONT_KEY_GOTHIC_18));
+	text_layer_set_font(s_day_label, fonts_get_system_font(FONT_KEY_GOTHIC_24));
 
 	layer_add_child(s_date_layer, text_layer_get_layer(s_day_label));
-
+	
+	
+// Hands
 	s_hands_layer = layer_create(bounds);
 	layer_set_update_proc(s_hands_layer, hands_update_proc);
 	layer_add_child(window_layer, s_hands_layer);
@@ -83,6 +99,7 @@ static void window_unload(Window *window) {
 	layer_destroy(s_simple_bg_layer);
 	layer_destroy(s_date_layer);
 
+	text_layer_destroy(s_weekday_label);
 	text_layer_destroy(s_day_label);
 
 	layer_destroy(s_hands_layer);
@@ -96,7 +113,8 @@ static void init() {
 	});
 	window_stack_push(window, true);
 
-	s_day_buffer[0] = '\0';
+	s_weekday_buffer[0] = '\0';
+	s_day_buffer[0] 	= '\0';
 
 // init hand paths
 	s_minute_arrow = gpath_create(&MINUTE_HAND_POINTS);
