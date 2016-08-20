@@ -24,7 +24,7 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
 	time_t now = time(NULL);
 	struct tm *t = localtime(&now);
 
-	// minute/hour hand
+// Hour/Minute hand
 	graphics_context_set_fill_color(ctx, GColorWhite);
 	graphics_context_set_stroke_color(ctx, gcolor_legible_over(GColorWhite));
 
@@ -36,7 +36,7 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
 	gpath_draw_filled(ctx, s_hour_arrow);
 	gpath_draw_outline(ctx, s_hour_arrow);
 
-	// dot in the middle
+// Dot
 	graphics_context_set_fill_color(ctx, GColorWhite);
 	graphics_fill_rect(ctx, GRect(bounds.size.w / 2 - 1, bounds.size.h / 2 - 1, 3, 3), 0, GCornerNone);
 }
@@ -69,25 +69,24 @@ static void window_load(Window *window) {
 	layer_add_child(window_layer, s_date_layer);
 	
 // Weekday
-	s_weekday_label = text_layer_create(GRect(10, 105, bounds.size.w - 20, 30));			//Change me
+	s_weekday_label = text_layer_create(GRect(10, bounds.size.h * 5/8, bounds.size.w - 20, 30));
 	text_layer_set_text(s_weekday_label, s_weekday_buffer);
 	text_layer_set_text_alignment(s_weekday_label, GTextAlignmentCenter);
-	text_layer_set_background_color(s_weekday_label, GColorBlack);
+	text_layer_set_background_color(s_weekday_label, GColorClear);
 	text_layer_set_text_color(s_weekday_label, GColorWhite);
 	text_layer_set_font(s_weekday_label, fonts_get_system_font(FONT_KEY_GOTHIC_24));
 
 	layer_add_child(s_date_layer, text_layer_get_layer(s_weekday_label));
 
 // Day
-	s_day_label = text_layer_create(GRect(bounds.size.w - 30, bounds.size.h / 2 - 15, 30, 30));			//Change me
+	s_day_label = text_layer_create(GRect(bounds.size.w - 26, bounds.size.h/2 - 15, 25, 30));
 	text_layer_set_text(s_day_label, s_day_buffer);
 	text_layer_set_text_alignment(s_day_label, GTextAlignmentRight);
-	text_layer_set_background_color(s_day_label, GColorBlack);
+	text_layer_set_background_color(s_day_label, GColorClear);
 	text_layer_set_text_color(s_day_label, GColorWhite);
 	text_layer_set_font(s_day_label, fonts_get_system_font(FONT_KEY_GOTHIC_24));
 
 	layer_add_child(s_date_layer, text_layer_get_layer(s_day_label));
-	
 	
 // Hands
 	s_hands_layer = layer_create(bounds);
