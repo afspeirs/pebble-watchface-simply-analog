@@ -12,16 +12,23 @@
         "messageKeys": [],
         "projectType": "native",
         "resources": {
-            "media": []
+            "media": [
+                {
+                    "file": "fonts/BebasNeueRegular.otf",
+                    "name": "FONT_BEBAS_NEUE_REGULAR_24",
+                    "targetPlatforms": null,
+                    "type": "font"
+                }
+            ]
         },
         "sdkVersion": "3",
         "targetPlatforms": [
             "basalt"
         ],
-        "uuid": "6c157e34-9454-41fb-92a8-db3effcfdcfa",
+        "uuid": "0e02d1fb-a100-44a3-a5a8-63df9e4d3c98",
         "watchapp": {
             "watchface": true
         }
     },
-    "version": "0.2.0"
+    "version": "0.3.0"
 }
