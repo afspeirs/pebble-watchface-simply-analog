@@ -8,6 +8,18 @@ static char s_weekday_buffer[16], s_date_buffer[16], s_month_buffer[16];
 static GPath *s_tick_paths[NUM_CLOCK_TICKS];
 static GPath *s_minute_arrow, *s_hour_arrow;
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////// Callbacks ///////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static void inbox_received_handler(DictionaryIterator *iter, void *context) {
+
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////// Main ////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static void bg_update_proc(Layer *layer, GContext *ctx) {
 	graphics_context_set_fill_color(ctx, GColorBlack);
 	graphics_fill_rect(ctx, layer_get_bounds(layer), 0, GCornerNone);
@@ -53,7 +65,7 @@ static void date_update_proc(Layer *layer, GContext *ctx) {
 	text_layer_set_text(s_date_label, s_date_buffer);
 
 // Month
-	strftime(s_month_buffer, sizeof(s_month_buffer), "%b", time);
+	strftime(s_month_buffer, sizeof(s_month_buffer), "%B", time);
 	text_layer_set_text(s_month_label, s_month_buffer);
 }
 
@@ -74,34 +86,34 @@ static void window_load(Window *window) {
 	layer_add_child(window_layer, s_date_layer);
 	
 // Weekday
-	s_weekday_label = text_layer_create(GRect(10, bounds.size.h * 5/8, bounds.size.w - 20, 30));
-	text_layer_set_text(s_weekday_label, s_weekday_buffer);
+	s_weekday_label = text_layer_create(GRect(10, bounds.size.h * 6/32, bounds.size.w - 20, 30)); // Top
+// 	s_weekday_label = text_layer_create(GRect(10, bounds.size.h * 5/8, bounds.size.w - 20, 30)); // Bottom
 	text_layer_set_text_alignment(s_weekday_label, GTextAlignmentCenter);
 	text_layer_set_background_color(s_weekday_label, GColorClear);
 	text_layer_set_text_color(s_weekday_label, GColorWhite);
 	text_layer_set_font(s_weekday_label, fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_BEBAS_NEUE_REGULAR_24)));
-
 	layer_add_child(s_date_layer, text_layer_get_layer(s_weekday_label));
+	text_layer_set_text(s_weekday_label, s_weekday_buffer);
 
-// Day
+// Date
 	s_date_label = text_layer_create(GRect(bounds.size.w - 26, bounds.size.h/2 - 15, 25, 30));
-	text_layer_set_text(s_date_label, s_date_buffer);
 	text_layer_set_text_alignment(s_date_label, GTextAlignmentRight);
 	text_layer_set_background_color(s_date_label, GColorClear);
 	text_layer_set_text_color(s_date_label, GColorWhite);
 	text_layer_set_font(s_date_label, fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_BEBAS_NEUE_REGULAR_24)));
-
 	layer_add_child(s_date_layer, text_layer_get_layer(s_date_label));
+	text_layer_set_text(s_date_label, s_date_buffer);
 	
 // Month
-	s_month_label = text_layer_create(GRect(0, bounds.size.h/2 - 15, 50, 30));
-	text_layer_set_text(s_month_label, s_month_buffer);
-	text_layer_set_text_alignment(s_month_label, GTextAlignmentLeft);
+// 	s_month_label = text_layer_create(GRect( 0, bounds.size.h/2 - 15, 50, 30)); // Left
+// 	text_layer_set_text_alignment(s_month_label, GTextAlignmentLeft);
+	s_month_label = text_layer_create(GRect(10, bounds.size.h * 5/8, bounds.size.w - 20, 30)); // Bottom
+	text_layer_set_text_alignment(s_month_label, GTextAlignmentCenter);
 	text_layer_set_background_color(s_month_label, GColorClear);
 	text_layer_set_text_color(s_month_label, GColorWhite);
 	text_layer_set_font(s_month_label, fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_BEBAS_NEUE_REGULAR_24)));
-
 	layer_add_child(s_date_layer, text_layer_get_layer(s_month_label));
+	text_layer_set_text(s_month_label, s_month_buffer);
 	
 // Hands
 	s_hands_layer = layer_create(bounds);
@@ -128,6 +140,11 @@ static void init() {
 	});
 	window_stack_push(window, true);
 
+	const int inbox_size = 128;
+	const int outbox_size = 128;
+	app_message_register_inbox_received(inbox_received_handler);
+	app_message_open(inbox_size, outbox_size);
+	
 	s_weekday_buffer[0] = '\0';
 	s_date_buffer[0] 	= '\0';
 	s_month_buffer[0] 	= '\0';

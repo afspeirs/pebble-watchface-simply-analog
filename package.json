@@ -1,18 +1,28 @@
 {
     "author": "AFSpeirs",
-    "dependencies": {},
+    "dependencies": {
+        "pebble-clay": "^1.0.0"
+    },
     "keywords": [],
     "name": "simply-analog",
     "pebble": {
         "capabilities": [
-            ""
+            "configurable"
         ],
-        "displayName": "Simply Analog WIP",
+        "displayName": "Simply Analog",
         "enableMultiJS": true,
         "messageKeys": [],
         "projectType": "native",
         "resources": {
             "media": [
+                {
+                    "file": "images/MenuImage.png",
+                    "menuIcon": true,
+                    "name": "IMAGE_MENU_IMAGE",
+                    "storageFormat": "png",
+                    "targetPlatforms": null,
+                    "type": "bitmap"
+                },
                 {
                     "file": "fonts/BebasNeueRegular.otf",
                     "name": "FONT_BEBAS_NEUE_REGULAR_24",
@@ -23,6 +33,7 @@
         },
         "sdkVersion": "3",
         "targetPlatforms": [
+            "aplite",
             "basalt"
         ],
         "uuid": "0e02d1fb-a100-44a3-a5a8-63df9e4d3c98",
@@ -30,5 +41,5 @@
             "watchface": true
         }
     },
-    "version": "0.3.0"
+    "version": "0.4.0"
 }
