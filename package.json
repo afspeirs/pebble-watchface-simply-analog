@@ -7,7 +7,7 @@
     "name": "simply-analog",
     "pebble": {
         "capabilities": [
-            "configurable"
+            ""
         ],
         "displayName": "Simply Analog",
         "enableMultiJS": true,
