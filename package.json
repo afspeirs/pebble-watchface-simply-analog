@@ -1,35 +1,18 @@
 {
     "author": "AFSpeirs",
-    "dependencies": {
-        "pebble-clay": "^1.0.2"
-    },
+    "dependencies": {},
     "keywords": [],
     "name": "simply-analog",
     "pebble": {
         "capabilities": [
-            "configurable"
+            ""
         ],
         "displayName": "Simply Analog",
         "enableMultiJS": true,
-        "messageKeys": [
-            "COLOUR_BACKGROUND"
-        ],
+        "messageKeys": [],
         "projectType": "native",
         "resources": {
             "media": [
-                {
-                    "file": "images/Battery Black",
-                    "name": "IMAGE_BATTERY_BLACK",
-                    "storageFormat": "png",
-                    "targetPlatforms": null,
-                    "type": "bitmap"
-                },
-                {
-                    "file": "images/Battery White",
-                    "name": "IMAGE_BATTERY_WHITE",
-                    "targetPlatforms": null,
-                    "type": "bitmap"
-                },
                 {
                     "file": "images/MenuImage.png",
                     "menuIcon": true,
@@ -56,5 +39,5 @@
             "watchface": true
         }
     },
-    "version": "0.5.0"
+    "version": "0.4.0"
 }
