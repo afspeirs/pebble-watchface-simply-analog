@@ -13,7 +13,11 @@
         "enableMultiJS": true,
         "messageKeys": [
             "COLOUR_BACKGROUND",
-            "COLOUR_HANDS"
+            "COLOUR_HAND_HOUR",
+            "COLOUR_HAND_MINUTE",
+            "COLOUR_WEEKDAY",
+            "COLOUR_DAY",
+            "COLOUR_MONTH"
         ],
         "projectType": "native",
         "resources": {
@@ -52,10 +56,10 @@
             "aplite",
             "basalt"
         ],
-        "uuid": "0e02d1fb-a100-44a3-a5a8-63df9e4d3c98",
+        "uuid": "ac6b82cf-e5d3-4628-9159-aa8f79c04a0f",
         "watchapp": {
             "watchface": true
         }
     },
-    "version": "0.6.0"
+    "version": "0.7.0"
 }
