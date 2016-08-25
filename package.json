@@ -12,7 +12,8 @@
         "displayName": "Simply Analog",
         "enableMultiJS": true,
         "messageKeys": [
-            "COLOUR_BACKGROUND"
+            "COLOUR_BACKGROUND",
+            "COLOUR_HANDS"
         ],
         "projectType": "native",
         "resources": {
@@ -56,5 +57,5 @@
             "watchface": true
         }
     },
-    "version": "0.5.0"
+    "version": "0.6.0"
 }

@@ -18,14 +18,14 @@ module.exports = [
 				"defaultValue": "000000",
 				"sunlight": true
 			},
-// 			{
-// 				"type": "color",
-// 				"messageKey": "COLOUR_DATE",
-// 				"label": "Date",
-// 				"defaultValue": "FFFFFF",
-// 				"sunlight": true,
+			{
+				"type": "color",
+				"messageKey": "COLOUR_HANDS",
+				"label": "Date",
+				"defaultValue": "FFFFFF",
+				"sunlight": true,
 // 				"capabilities": ["NOT_BW"],
-// 			},
+			},
 // 			{
 // 				"type": "color",
 // 				"messageKey": "COLOUR_HOUR",

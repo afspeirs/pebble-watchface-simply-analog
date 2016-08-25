@@ -15,27 +15,27 @@ static GPath *s_minute_arrow, *s_hour_arrow;
 static void inbox_received_handler(DictionaryIterator *iter, void *context) {
 // Colours
 	Tuple *colour_background_t = dict_find(iter, MESSAGE_KEY_COLOUR_BACKGROUND);
-// 	Tuple *colour_hour_t = dict_find(iter, MESSAGE_KEY_COLOUR_HOUR);
+ 	Tuple *colour_hands_t = dict_find(iter, MESSAGE_KEY_COLOUR_HANDS);
 // 	Tuple *colour_minute_t = dict_find(iter, MESSAGE_KEY_COLOUR_MINUTE);
 // 	Tuple *colour_date_t = dict_find(iter, MESSAGE_KEY_COLOUR_DATE);
 // 	Tuple *colour_bluetooth_t = dict_find(iter, MESSAGE_KEY_COLOUR_BLUETOOTH);
     int colour_background = colour_background_t->value->int32;
-// 	int colour_hour = colour_hour_t->value->int32;
+ 	int colour_hands = colour_hands_t->value->int32;
 // 	int colour_minute = colour_minute_t->value->int32;
 // 	int colour_date = colour_date_t->value->int32;
 // 	int colour_bluetooth = colour_bluetooth_t->value->int32;
 	persist_write_int(MESSAGE_KEY_COLOUR_BACKGROUND, colour_background);
-// 	persist_write_int(MESSAGE_KEY_COLOUR_HOUR, colour_hour);
+ 	persist_write_int(MESSAGE_KEY_COLOUR_HANDS, colour_hands);
 // 	persist_write_int(MESSAGE_KEY_COLOUR_MINUTE, colour_minute);
 // 	persist_write_int(MESSAGE_KEY_COLOUR_DATE, colour_date);
 // 	persist_write_int(MESSAGE_KEY_COLOUR_BLUETOOTH, colour_bluetooth);	
 	
 // Set Colours
 	layer_mark_dirty(s_background_layer); //update background
-	text_layer_set_text_color(s_weekday_label, gcolor_legible_over(GColorFromHEX(colour_background)));
-	text_layer_set_text_color(s_date_label, gcolor_legible_over(GColorFromHEX(colour_background)));
-	text_layer_set_text_color(s_month_label, gcolor_legible_over(GColorFromHEX(colour_background)));
-
+	layer_mark_dirty(s_hands_layer); //update background
+	text_layer_set_text_color(s_weekday_label, GColorFromHEX(colour_hands));	// Weekday
+	text_layer_set_text_color(s_date_label, GColorFromHEX(colour_hands));		// Date
+	text_layer_set_text_color(s_month_label, GColorFromHEX(colour_hands));		// Month
 	
 // 	#if defined(PBL_COLOR)
 // 		GColor dt_colour = GColorFromHEX(colour_date);
@@ -59,15 +59,17 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
 
 static void bg_update_proc(Layer *layer, GContext *ctx) {
 	int colour_background = persist_read_int(MESSAGE_KEY_COLOUR_BACKGROUND);
-	if(colour_background) {
+	int colour_hands = persist_read_int(MESSAGE_KEY_COLOUR_HANDS);
+	if(colour_background || colour_hands) {
 		GColor bg_colour = GColorFromHEX(colour_background);
-		graphics_context_set_fill_color(ctx, bg_colour);
+		GColor hd_colour = GColorFromHEX(colour_hands);
+		graphics_context_set_fill_color(ctx, bg_colour);		// Background
 		graphics_fill_rect(ctx, layer_get_bounds(layer), 0, GCornerNone);
-		graphics_context_set_fill_color(ctx, gcolor_legible_over(bg_colour));	// Hands
+		graphics_context_set_fill_color(ctx, hd_colour);		// Hands
 	} else {
-		graphics_context_set_fill_color(ctx, GColorBlack);
+		graphics_context_set_fill_color(ctx, GColorBlack);		// Background
 		graphics_fill_rect(ctx, layer_get_bounds(layer), 0, GCornerNone);
-		graphics_context_set_fill_color(ctx, GColorWhite);
+		graphics_context_set_fill_color(ctx, GColorWhite);		// Hands
 	}
 	for (int i = 0; i < NUM_CLOCK_TICKS; ++i) {
 		gpath_draw_filled(ctx, s_tick_paths[i]);
@@ -82,9 +84,11 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
 
 // Hour/Minute hand
 	int colour_background = persist_read_int(MESSAGE_KEY_COLOUR_BACKGROUND);
-	if(colour_background) {
+	int colour_hands = persist_read_int(MESSAGE_KEY_COLOUR_HANDS);
+	if(colour_background || colour_hands) {
 		GColor bg_colour = GColorFromHEX(colour_background);
-		graphics_context_set_fill_color(ctx, gcolor_legible_over(bg_colour));
+		GColor hd_colour = GColorFromHEX(colour_hands);
+		graphics_context_set_fill_color(ctx, hd_colour);
 		graphics_context_set_stroke_color(ctx, bg_colour);
 	} else {
 		graphics_context_set_fill_color(ctx, GColorWhite);
@@ -100,9 +104,9 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
 	gpath_draw_outline(ctx, s_minute_arrow);
 
 // Dot
-	if(colour_background) {
-		GColor bg_colour = GColorFromHEX(colour_background);
-		graphics_context_set_fill_color(ctx, gcolor_legible_over(bg_colour));
+	if(colour_background || colour_hands) {
+		GColor hd_colour = GColorFromHEX(colour_hands);
+		graphics_context_set_fill_color(ctx, hd_colour);
 	} else {
 		graphics_context_set_fill_color(ctx, GColorWhite);
 	}
@@ -171,17 +175,17 @@ static void window_load(Window *window) {
 	
 // Set Colours
 	int colour_background = persist_read_int(MESSAGE_KEY_COLOUR_BACKGROUND);
-	if(colour_background) {
-		GColor bg_colour = GColorFromHEX(colour_background);
-		text_layer_set_text_color(s_weekday_label, gcolor_legible_over(bg_colour));
-		text_layer_set_text_color(s_date_label, gcolor_legible_over(bg_colour));
-		text_layer_set_text_color(s_month_label, gcolor_legible_over(bg_colour));
+	int colour_hands = persist_read_int(MESSAGE_KEY_COLOUR_HANDS);
+	if(colour_background || colour_hands) {
+		GColor hd_colour = GColorFromHEX(colour_hands);
+		text_layer_set_text_color(s_weekday_label, hd_colour);
+		text_layer_set_text_color(s_date_label, hd_colour);
+		text_layer_set_text_color(s_month_label, hd_colour);
 	} else {
 		text_layer_set_text_color(s_weekday_label, GColorWhite);
 		text_layer_set_text_color(s_date_label, GColorWhite);
 		text_layer_set_text_color(s_month_label, GColorWhite);
 	}
-	
 	
 // Hands
 	s_hands_layer = layer_create(bounds);
