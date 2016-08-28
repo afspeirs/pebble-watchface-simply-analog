@@ -17,7 +17,8 @@
             "COLOUR_HAND_MINUTE",
             "COLOUR_WEEKDAY",
             "COLOUR_DAY",
-            "COLOUR_MONTH"
+            "COLOUR_MONTH",
+            "COLOUR_BLUETOOTH"
         ],
         "projectType": "native",
         "resources": {
@@ -56,7 +57,7 @@
             "aplite",
             "basalt"
         ],
-        "uuid": "ac6b82cf-e5d3-4628-9159-aa8f79c04a0f",
+        "uuid": "cf2e2785-62e3-4294-af8f-d43f65763069",
         "watchapp": {
             "watchface": true
         }

@@ -12,6 +12,37 @@ static GPath *s_minute_arrow, *s_hour_arrow;
 //////////// Callbacks ///////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static void bluetooth_callback(bool connected) {
+	int colour_background = persist_read_int(MESSAGE_KEY_COLOUR_BACKGROUND);
+	int colour_weekday = persist_read_int(MESSAGE_KEY_COLOUR_WEEKDAY);
+	int colour_month = persist_read_int(MESSAGE_KEY_COLOUR_MONTH);
+	int colour_bluetooth = persist_read_int(MESSAGE_KEY_COLOUR_BLUETOOTH);
+	
+	if(!connected) {		// Disconected
+		if(colour_bluetooth) {
+			GColor bg_colour = GColorFromHEX(colour_bluetooth);
+			GColor bt_colour = GColorFromHEX(colour_bluetooth);
+			text_layer_set_text_color(s_weekday_label, COLOR_FALLBACK(bt_colour, gcolor_legible_over(bg_colour)));
+			text_layer_set_text_color(s_month_label, COLOR_FALLBACK(bt_colour, gcolor_legible_over(bg_colour)));
+		} else {
+			text_layer_set_text_color(s_weekday_label, COLOR_FALLBACK(GColorRed, GColorBlack));
+			text_layer_set_text_color(s_month_label, COLOR_FALLBACK(GColorRed, GColorBlack));
+		}
+		vibes_long_pulse();
+	} else {				// Connected
+		if(colour_background || colour_weekday || colour_month) {
+			GColor bg_colour = GColorFromHEX(colour_background);
+			GColor wk_colour = GColorFromHEX(colour_weekday);
+			GColor mn_colour = GColorFromHEX(colour_month);
+			text_layer_set_text_color(s_weekday_label, COLOR_FALLBACK(wk_colour, gcolor_legible_over(bg_colour)));
+			text_layer_set_text_color(s_month_label, COLOR_FALLBACK(mn_colour, gcolor_legible_over(bg_colour)));
+		} else {	
+			text_layer_set_text_color(s_weekday_label, GColorWhite);
+			text_layer_set_text_color(s_month_label, GColorWhite);
+		}
+	}
+}
+
 static void inbox_received_handler(DictionaryIterator *iter, void *context) {
 // Colours
 	Tuple *colour_background_t	= dict_find(iter, MESSAGE_KEY_COLOUR_BACKGROUND);
@@ -20,28 +51,30 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
 	Tuple *colour_weekday_t		= dict_find(iter, MESSAGE_KEY_COLOUR_WEEKDAY);
 	Tuple *colour_day_t			= dict_find(iter, MESSAGE_KEY_COLOUR_DAY);
 	Tuple *colour_month_t		= dict_find(iter, MESSAGE_KEY_COLOUR_MONTH);
-// 	Tuple *colour_bluetooth_t	= dict_find(iter, MESSAGE_KEY_COLOUR_BLUETOOTH);
+	Tuple *colour_bluetooth_t	= dict_find(iter, MESSAGE_KEY_COLOUR_BLUETOOTH);
     int colour_background		= colour_background_t->value->int32;
  	int colour_hand_hour		= colour_hand_hour_t->value->int32;
 	int colour_hand_minute		= colour_hand_minute_t->value->int32;
 	int colour_weekday			= colour_weekday_t->value->int32;
 	int colour_day				= colour_day_t->value->int32;
 	int colour_month			= colour_month_t->value->int32;
-// 	int colour_bluetooth = colour_bluetooth_t->value->int32;
+	int colour_bluetooth = colour_bluetooth_t->value->int32;
 	persist_write_int(MESSAGE_KEY_COLOUR_BACKGROUND, colour_background);
 	persist_write_int(MESSAGE_KEY_COLOUR_HAND_HOUR, colour_hand_hour);
 	persist_write_int(MESSAGE_KEY_COLOUR_HAND_MINUTE, colour_hand_minute);
 	persist_write_int(MESSAGE_KEY_COLOUR_WEEKDAY, colour_weekday);
 	persist_write_int(MESSAGE_KEY_COLOUR_DAY, colour_day);
 	persist_write_int(MESSAGE_KEY_COLOUR_MONTH, colour_month);
-// 	persist_write_int(MESSAGE_KEY_COLOUR_BLUETOOTH, colour_bluetooth);	
+	persist_write_int(MESSAGE_KEY_COLOUR_BLUETOOTH, colour_bluetooth);	
 	
 // Set Colours
 	layer_mark_dirty(s_background_layer); //update background
 	layer_mark_dirty(s_hands_layer); //update Hands
-	text_layer_set_text_color(s_weekday_label, GColorFromHEX(colour_weekday));	// Weekday
+// 	text_layer_set_text_color(s_weekday_label, GColorFromHEX(colour_weekday));	// Weekday
 	text_layer_set_text_color(s_day_label, GColorFromHEX(colour_day));			// Date
-	text_layer_set_text_color(s_month_label, GColorFromHEX(colour_month));		// Month
+// 	text_layer_set_text_color(s_month_label, GColorFromHEX(colour_month));		// Month
+	
+	bluetooth_callback(connection_service_peek_pebble_app_connection());
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -171,23 +204,19 @@ static void window_load(Window *window) {
 	
 // Set Colours
 	int colour_background = persist_read_int(MESSAGE_KEY_COLOUR_BACKGROUND);
-	int colour_weekday = persist_read_int(MESSAGE_KEY_COLOUR_WEEKDAY);
 	int colour_day = persist_read_int(MESSAGE_KEY_COLOUR_DAY);
-	int colour_month = persist_read_int(MESSAGE_KEY_COLOUR_MONTH);
-	if(colour_background || colour_weekday || colour_day || colour_month) {
-		text_layer_set_text_color(s_weekday_label, GColorFromHEX(colour_weekday));
+	if(colour_background || colour_day) {
 		text_layer_set_text_color(s_day_label, GColorFromHEX(colour_day));
-		text_layer_set_text_color(s_month_label, GColorFromHEX(colour_month));
 	} else {
-		text_layer_set_text_color(s_weekday_label, GColorWhite);
 		text_layer_set_text_color(s_day_label, GColorWhite);
-		text_layer_set_text_color(s_month_label, GColorWhite);
 	}
 	
 // Hands
 	s_hands_layer = layer_create(bounds);
 	layer_set_update_proc(s_hands_layer, hands_update_proc);
 	layer_add_child(window_layer, s_hands_layer);
+	
+	bluetooth_callback(connection_service_peek_pebble_app_connection());
 }
 
 static void window_unload(Window *window) {
@@ -226,6 +255,10 @@ static void init() {
 	for (int i = 0; i < NUM_CLOCK_TICKS; ++i) {
 		s_tick_paths[i] = gpath_create(&ANALOG_BG_POINTS[i]);
 	}
+	
+	connection_service_subscribe((ConnectionHandlers) {
+  		.pebble_app_connection_handler = bluetooth_callback
+	});
 	
 	const int inbox_size = 128;
 	const int outbox_size = 128;

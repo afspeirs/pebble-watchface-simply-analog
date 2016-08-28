@@ -58,14 +58,14 @@ module.exports = [
 				"sunlight": true,
 				"capabilities": ["NOT_BW"],
 			},
-// 			{
-// 				"type": "color",
-// 				"messageKey": "COLOUR_BLUETOOTH",
-// 				"label": "Blutooth Disconnection",
-// 				"defaultValue": "FF0000",
-// 				"sunlight": true,
-// 				"capabilities": ["NOT_BW"],
-// 			}
+			{
+				"type": "color",
+				"messageKey": "COLOUR_BLUETOOTH",
+				"label": "Blutooth Disconnection",
+				"defaultValue": "FF0000",
+				"sunlight": true,
+				"capabilities": ["NOT_BW"],
+			}
 		]
 	},
 // 	{
