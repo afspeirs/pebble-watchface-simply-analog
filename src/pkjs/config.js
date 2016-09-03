@@ -114,7 +114,7 @@ module.exports = [
 // 				]
 // 			},
 // 		]
-//	},
+// 	},
 // 	{
 // 		"type": "section",
 // 		"items": [

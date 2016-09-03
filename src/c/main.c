@@ -5,12 +5,23 @@ static Window *window;
 static Layer *s_background_layer, *s_date_layer, *s_hands_layer;
 static TextLayer *s_weekday_label, *s_day_label, *s_month_label;
 static char s_weekday_buffer[16], s_date_buffer[16], s_month_buffer[16];
-static GPath *s_tick_paths[NUM_CLOCK_TICKS];
-static GPath *s_minute_arrow, *s_hour_arrow;
+static GPath *s_minute_arrow, *s_hour_arrow, *s_tick_paths[NUM_CLOCK_TICKS];
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////// Callbacks ///////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void unobstructed_change(AnimationProgress progress, void* data) {
+	GRect bounds = layer_get_unobstructed_bounds(window_get_root_layer(window));
+
+	GPoint center = grect_center_point(&bounds);
+	gpath_move_to(s_minute_arrow, center);
+	gpath_move_to(s_hour_arrow, center);
+	
+	layer_set_frame(text_layer_get_layer(s_weekday_label),GRect(10, bounds.size.h * 6/32, bounds.size.w - 20, 30)); // Top
+	layer_set_frame(text_layer_get_layer(s_day_label),GRect(bounds.size.w - 26, bounds.size.h/2 - 15, 25, 30));
+	layer_set_frame(text_layer_get_layer(s_month_label),GRect(10, bounds.size.h * 5/8, bounds.size.w - 20, 30));
+}
 
 static void bluetooth_callback(bool connected) {
 	int colour_background = persist_read_int(MESSAGE_KEY_COLOUR_BACKGROUND);
@@ -58,22 +69,20 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
 	int colour_weekday			= colour_weekday_t->value->int32;
 	int colour_day				= colour_day_t->value->int32;
 	int colour_month			= colour_month_t->value->int32;
-	int colour_bluetooth = colour_bluetooth_t->value->int32;
+	int colour_bluetooth 		= colour_bluetooth_t->value->int32;
 	persist_write_int(MESSAGE_KEY_COLOUR_BACKGROUND, colour_background);
 	persist_write_int(MESSAGE_KEY_COLOUR_HAND_HOUR, colour_hand_hour);
 	persist_write_int(MESSAGE_KEY_COLOUR_HAND_MINUTE, colour_hand_minute);
 	persist_write_int(MESSAGE_KEY_COLOUR_WEEKDAY, colour_weekday);
 	persist_write_int(MESSAGE_KEY_COLOUR_DAY, colour_day);
 	persist_write_int(MESSAGE_KEY_COLOUR_MONTH, colour_month);
-	persist_write_int(MESSAGE_KEY_COLOUR_BLUETOOTH, colour_bluetooth);	
-	
+	persist_write_int(MESSAGE_KEY_COLOUR_BLUETOOTH, colour_bluetooth);
+
 // Set Colours
-	layer_mark_dirty(s_background_layer); //update background
-	layer_mark_dirty(s_hands_layer); //update Hands
-// 	text_layer_set_text_color(s_weekday_label, GColorFromHEX(colour_weekday));	// Weekday
-	text_layer_set_text_color(s_day_label, GColorFromHEX(colour_day));			// Date
-// 	text_layer_set_text_color(s_month_label, GColorFromHEX(colour_month));		// Month
-	
+	layer_mark_dirty(s_background_layer); 		// Update background
+	layer_mark_dirty(s_hands_layer); 			// Update Hands
+	text_layer_set_text_color(s_day_label, GColorFromHEX(colour_day));
+
 	bluetooth_callback(connection_service_peek_pebble_app_connection());
 }
 
@@ -98,7 +107,7 @@ static void bg_update_proc(Layer *layer, GContext *ctx) {
 }
 
 static void hands_update_proc(Layer *layer, GContext *ctx) {
-	GRect bounds = layer_get_bounds(layer);
+	GRect bounds = layer_get_unobstructed_bounds(layer);
 
 	time_t now = time(NULL);
 	struct tm *t = localtime(&now);
@@ -165,7 +174,7 @@ static void handle_tick(struct tm *tick_time, TimeUnits units_changed) {
 
 static void window_load(Window *window) {
 	Layer *window_layer = window_get_root_layer(window);
-	GRect bounds = layer_get_bounds(window_layer);
+	GRect bounds = layer_get_unobstructed_bounds(window_layer);
 
 	s_background_layer = layer_create(bounds);
 	layer_set_update_proc(s_background_layer, bg_update_proc);
@@ -175,9 +184,12 @@ static void window_load(Window *window) {
 	layer_set_update_proc(s_date_layer, date_update_proc);
 	layer_add_child(window_layer, s_date_layer);
 	
-// Weekday
+// Locations
 	s_weekday_label = text_layer_create(GRect(10, bounds.size.h * 6/32, bounds.size.w - 20, 30)); // Top
-// 	s_weekday_label = text_layer_create(GRect(10, bounds.size.h * 5/8, bounds.size.w - 20, 30)); // Bottom
+	s_day_label = text_layer_create(GRect(bounds.size.w - 26, bounds.size.h/2 - 15, 25, 30));
+	s_month_label = text_layer_create(GRect(10, bounds.size.h * 5/8, bounds.size.w - 20, 30));
+
+// Weekday
 	text_layer_set_text_alignment(s_weekday_label, GTextAlignmentCenter);
 	text_layer_set_background_color(s_weekday_label, GColorClear);
 	text_layer_set_font(s_weekday_label, fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_BEBAS_NEUE_REGULAR_24)));
@@ -185,7 +197,6 @@ static void window_load(Window *window) {
 	text_layer_set_text(s_weekday_label, s_weekday_buffer);
 
 // Date
-	s_day_label = text_layer_create(GRect(bounds.size.w - 26, bounds.size.h/2 - 15, 25, 30));
 	text_layer_set_text_alignment(s_day_label, GTextAlignmentRight);
 	text_layer_set_background_color(s_day_label, GColorClear);
 	text_layer_set_font(s_day_label, fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_BEBAS_NEUE_REGULAR_24)));
@@ -193,10 +204,7 @@ static void window_load(Window *window) {
 	text_layer_set_text(s_day_label, s_date_buffer);
 	
 // Month
-	s_month_label = text_layer_create(GRect(10, bounds.size.h * 5/8, bounds.size.w - 20, 30)); // Bottom
 	text_layer_set_text_alignment(s_month_label, GTextAlignmentCenter);
-// 	s_month_label = text_layer_create(GRect( 0, bounds.size.h / 2 - 15, 50, 30)); // Left
-// 	text_layer_set_text_alignment(s_month_label, GTextAlignmentLeft);
 	text_layer_set_background_color(s_month_label, GColorClear);
 	text_layer_set_font(s_month_label, fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_BEBAS_NEUE_REGULAR_24)));
 	layer_add_child(window_get_root_layer(window), text_layer_get_layer(s_month_label));
@@ -238,6 +246,11 @@ static void init() {
 	});
 	window_stack_push(window, true);
 	
+	UnobstructedAreaHandlers handlers = {
+		.change = unobstructed_change,
+	};
+	unobstructed_area_service_subscribe(handlers, NULL);
+	
 	s_weekday_buffer[0] = '\0';
 	s_date_buffer[0] 	= '\0';
 	s_month_buffer[0] 	= '\0';
@@ -247,7 +260,7 @@ static void init() {
 	s_hour_arrow = gpath_create(&HOUR_HAND_POINTS);
 
 	Layer *window_layer = window_get_root_layer(window);
-	GRect bounds = layer_get_bounds(window_layer);
+	GRect bounds = layer_get_unobstructed_bounds(window_layer);
 	GPoint center = grect_center_point(&bounds);
 	gpath_move_to(s_minute_arrow, center);
 	gpath_move_to(s_hour_arrow, center);
