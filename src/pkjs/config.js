@@ -58,6 +58,15 @@ module.exports = [
 				"sunlight": true,
 				"capabilities": ["NOT_BW"],
 			},
+// 		]
+// 	},
+// 	{
+// 		"type": "section",
+// 		"items": [
+// 			{
+// 				"type": "heading",
+// 				"defaultValue": "Bluetooth"
+// 			},
 			{
 				"type": "color",
 				"messageKey": "COLOUR_BLUETOOTH",
@@ -65,9 +74,33 @@ module.exports = [
 				"defaultValue": "FF0000",
 				"sunlight": true,
 				"capabilities": ["NOT_BW"],
-			}
+			},
+// 			{
+// 				"type": "select",
+// 				"messageKey": "SELECT_BLUETOOTH_DISCONNECT",
+// 				"defaultValue": "2",
+// 				"label": "Vibration",
+// 				"options": [
+// 					{ 
+// 						"label": "None",
+// 						"value": "0" 
+// 					},
+// 					{ 
+// 						"label": "Short",
+// 						"value": "1" 
+// 					},
+// 					{ 
+// 						"label": "Long",
+// 						"value": "2" 
+// 					},
+// 					{ 
+// 						"label": "Double",
+// 						"value": "3" 
+// 					}
+// 				]
+// 			},
 		]
-	},
+ 	},
 // 	{
 // 		"type": "section",
 // 		"items": [

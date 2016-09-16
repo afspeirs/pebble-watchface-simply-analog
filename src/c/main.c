@@ -24,29 +24,34 @@ void unobstructed_change(AnimationProgress progress, void* data) {
 }
 
 static void bluetooth_callback(bool connected) {
+// 	char *select_bluetooth_disconnect = "";
+// 	persist_read_string(MESSAGE_KEY_SELECT_BLUETOOTH_DISCONNECT,select_bluetooth_disconnect,5);
+// 	int select_bluetooth_disconnect_int = atoi(select_bluetooth_disconnect);
+	
 	int colour_background = persist_read_int(MESSAGE_KEY_COLOUR_BACKGROUND);
 	int colour_weekday = persist_read_int(MESSAGE_KEY_COLOUR_WEEKDAY);
 	int colour_month = persist_read_int(MESSAGE_KEY_COLOUR_MONTH);
 	int colour_bluetooth = persist_read_int(MESSAGE_KEY_COLOUR_BLUETOOTH);
 	
-	if(!connected) {		// Disconected
-		if(colour_bluetooth) {
-			GColor bg_colour = GColorFromHEX(colour_bluetooth);
-			GColor bt_colour = GColorFromHEX(colour_bluetooth);
-			text_layer_set_text_color(s_weekday_label, COLOR_FALLBACK(bt_colour, gcolor_legible_over(bg_colour)));
-			text_layer_set_text_color(s_month_label, COLOR_FALLBACK(bt_colour, gcolor_legible_over(bg_colour)));
-		} else {
-			text_layer_set_text_color(s_weekday_label, COLOR_FALLBACK(GColorRed, GColorBlack));
-			text_layer_set_text_color(s_month_label, COLOR_FALLBACK(GColorRed, GColorBlack));
+	if(!connected) {												
+		if(colour_background || colour_bluetooth) {	// Disconected with config
+			text_layer_set_text_color(s_weekday_label, PBL_IF_BW_ELSE(gcolor_legible_over(GColorFromHEX(colour_background)), GColorFromHEX(colour_bluetooth)));	// Set Top Colour
+			text_layer_set_text_color(s_month_label, PBL_IF_BW_ELSE(gcolor_legible_over(GColorFromHEX(colour_background)), GColorFromHEX(colour_bluetooth)));		// Set Bottom Colour
+		} else { 									// Disconnected and no config
+			text_layer_set_text_color(s_weekday_label, PBL_IF_BW_ELSE(GColorBlack, GColorRed));	// Set Top Colour
+			text_layer_set_text_color(s_month_label, PBL_IF_BW_ELSE(GColorBlack, GColorRed));	// Set Bottom Colour
 		}
+// 		if(select_bluetooth_disconnect_int == 0) { }		// No vibration 
+// 		else if(select_bluetooth_disconnect_int == 1) { vibes_short_pulse(); }	// Short vibration
+// 		else if(select_bluetooth_disconnect_int == 2) { vibes_long_pulse(); }	// Long vibration
+// 		else if(select_bluetooth_disconnect_int == 3) { vibes_double_pulse(); }	// Double vibration
+// 		else { 
 		vibes_long_pulse();
-	} else {				// Connected
+// 		}	// Default
+	} else {														// Connected
 		if(colour_background || colour_weekday || colour_month) {
-			GColor bg_colour = GColorFromHEX(colour_background);
-			GColor wk_colour = GColorFromHEX(colour_weekday);
-			GColor mn_colour = GColorFromHEX(colour_month);
-			text_layer_set_text_color(s_weekday_label, COLOR_FALLBACK(wk_colour, gcolor_legible_over(bg_colour)));
-			text_layer_set_text_color(s_month_label, COLOR_FALLBACK(mn_colour, gcolor_legible_over(bg_colour)));
+			text_layer_set_text_color(s_weekday_label, PBL_IF_BW_ELSE(gcolor_legible_over(GColorFromHEX(colour_background)), GColorFromHEX(colour_weekday)));	// Set Top Colour
+			text_layer_set_text_color(s_month_label, PBL_IF_BW_ELSE(gcolor_legible_over(GColorFromHEX(colour_background)), GColorFromHEX(colour_month)));		// Set Bottom Colour
 		} else {	
 			text_layer_set_text_color(s_weekday_label, GColorWhite);
 			text_layer_set_text_color(s_month_label, GColorWhite);
@@ -57,37 +62,43 @@ static void bluetooth_callback(bool connected) {
 static void inbox_received_handler(DictionaryIterator *iter, void *context) {
 // Colours
 	Tuple *colour_background_t	= dict_find(iter, MESSAGE_KEY_COLOUR_BACKGROUND);
- 	Tuple *colour_hand_hour_t	= dict_find(iter, MESSAGE_KEY_COLOUR_HAND_HOUR);
-	Tuple *colour_hand_minute_t = dict_find(iter, MESSAGE_KEY_COLOUR_HAND_MINUTE);
-	Tuple *colour_weekday_t		= dict_find(iter, MESSAGE_KEY_COLOUR_WEEKDAY);
-	Tuple *colour_day_t			= dict_find(iter, MESSAGE_KEY_COLOUR_DAY);
-	Tuple *colour_month_t		= dict_find(iter, MESSAGE_KEY_COLOUR_MONTH);
-	Tuple *colour_bluetooth_t	= dict_find(iter, MESSAGE_KEY_COLOUR_BLUETOOTH);
-    int colour_background		= colour_background_t->value->int32;
- 	int colour_hand_hour		= colour_hand_hour_t->value->int32;
-	int colour_hand_minute		= colour_hand_minute_t->value->int32;
-	int colour_weekday			= colour_weekday_t->value->int32;
-	int colour_day				= colour_day_t->value->int32;
-	int colour_month			= colour_month_t->value->int32;
-	int colour_bluetooth 		= colour_bluetooth_t->value->int32;
-	persist_write_int(MESSAGE_KEY_COLOUR_BACKGROUND, colour_background);
-	persist_write_int(MESSAGE_KEY_COLOUR_HAND_HOUR, colour_hand_hour);
-	persist_write_int(MESSAGE_KEY_COLOUR_HAND_MINUTE, colour_hand_minute);
-	persist_write_int(MESSAGE_KEY_COLOUR_WEEKDAY, colour_weekday);
-	persist_write_int(MESSAGE_KEY_COLOUR_DAY, colour_day);
-	persist_write_int(MESSAGE_KEY_COLOUR_MONTH, colour_month);
-	persist_write_int(MESSAGE_KEY_COLOUR_BLUETOOTH, colour_bluetooth);
-
+	int colour_background		= colour_background_t->value->int32;
+	persist_write_int(MESSAGE_KEY_COLOUR_BACKGROUND, colour_background);	
+	#if defined(PBL_COLOR)
+		Tuple *colour_hand_hour_t	= dict_find(iter, MESSAGE_KEY_COLOUR_HAND_HOUR);
+		int colour_hand_hour		= colour_hand_hour_t->value->int32;
+		persist_write_int(MESSAGE_KEY_COLOUR_HAND_HOUR, colour_hand_hour);
+		Tuple *colour_hand_minute_t = dict_find(iter, MESSAGE_KEY_COLOUR_HAND_MINUTE);
+		int colour_hand_minute		= colour_hand_minute_t->value->int32;
+		persist_write_int(MESSAGE_KEY_COLOUR_HAND_MINUTE, colour_hand_minute);
+		Tuple *colour_weekday_t		= dict_find(iter, MESSAGE_KEY_COLOUR_WEEKDAY);
+		int colour_weekday			= colour_weekday_t->value->int32;
+		persist_write_int(MESSAGE_KEY_COLOUR_WEEKDAY, colour_weekday);
+		Tuple *colour_day_t			= dict_find(iter, MESSAGE_KEY_COLOUR_DAY);
+		int colour_day				= colour_day_t->value->int32;
+		persist_write_int(MESSAGE_KEY_COLOUR_DAY, colour_day);
+		Tuple *colour_month_t		= dict_find(iter, MESSAGE_KEY_COLOUR_MONTH);
+		int colour_month			= colour_month_t->value->int32;
+		persist_write_int(MESSAGE_KEY_COLOUR_MONTH, colour_month);
+// Bluetooth
+		Tuple *colour_bluetooth_t	= dict_find(iter, MESSAGE_KEY_COLOUR_BLUETOOTH);
+		int colour_bluetooth		= colour_bluetooth_t->value->int32;
+		persist_write_int(MESSAGE_KEY_COLOUR_BLUETOOTH, colour_bluetooth);
+	#endif
+// 	Tuple *select_bluetooth_diconnect_t = dict_find(iter, MESSAGE_KEY_SELECT_BLUETOOTH_DISCONNECT);
+// 	char *select_bluetooth_disconnect = select_bluetooth_diconnect_t->value->cstring;
+// 	persist_write_string(MESSAGE_KEY_SELECT_BLUETOOTH_DISCONNECT, select_bluetooth_disconnect);
+		
 // Set Colours
-	layer_mark_dirty(s_background_layer); 		// Update background
-	layer_mark_dirty(s_hands_layer); 			// Update Hands
-	text_layer_set_text_color(s_day_label, GColorFromHEX(colour_day));
-
+	layer_mark_dirty(s_background_layer); 	// Update background
+	layer_mark_dirty(s_hands_layer); 		// Update Hands
+	text_layer_set_text_color(s_day_label, PBL_IF_BW_ELSE(gcolor_legible_over(GColorFromHEX(colour_background)), GColorFromHEX(colour_day)));
+	
 	bluetooth_callback(connection_service_peek_pebble_app_connection());
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////// Main ////////////////////////////////////////////////////////////////////////////////////
+//////////// update //////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void bg_update_proc(Layer *layer, GContext *ctx) {
@@ -118,7 +129,7 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
 	int colour_hand_minute = persist_read_int(MESSAGE_KEY_COLOUR_HAND_MINUTE);
 	
 	if(colour_background || colour_hand_hour) {
-		graphics_context_set_fill_color(ctx, GColorFromHEX(colour_hand_hour));
+		graphics_context_set_fill_color(ctx, PBL_IF_BW_ELSE(gcolor_legible_over(GColorFromHEX(colour_background)), GColorFromHEX(colour_hand_hour)));
 		graphics_context_set_stroke_color(ctx, GColorFromHEX(colour_background));
 	} else {
 		graphics_context_set_fill_color(ctx, GColorWhite);
@@ -131,7 +142,7 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
 
 // Minute
 	if(colour_background || colour_hand_minute) {
-		graphics_context_set_fill_color(ctx, GColorFromHEX(colour_hand_minute));
+		graphics_context_set_fill_color(ctx, PBL_IF_BW_ELSE(gcolor_legible_over(GColorFromHEX(colour_background)), GColorFromHEX(colour_hand_minute)));
 		graphics_context_set_stroke_color(ctx, GColorFromHEX(colour_background));
 	} else {
 		graphics_context_set_fill_color(ctx, GColorWhite);
@@ -144,7 +155,7 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
 
 // Dot
 	if(colour_background || colour_hand_hour) {
-		graphics_context_set_fill_color(ctx, GColorFromHEX(colour_hand_hour));
+		graphics_context_set_fill_color(ctx, PBL_IF_BW_ELSE(gcolor_legible_over(GColorFromHEX(colour_background)), GColorFromHEX(colour_hand_minute)));
 	} else {
 		graphics_context_set_fill_color(ctx, GColorWhite);
 	}
@@ -171,6 +182,10 @@ static void date_update_proc(Layer *layer, GContext *ctx) {
 static void handle_tick(struct tm *tick_time, TimeUnits units_changed) {
 	layer_mark_dirty(window_get_root_layer(window));
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////// Load & Unload ///////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void window_load(Window *window) {
 	Layer *window_layer = window_get_root_layer(window);
