@@ -6,22 +6,11 @@ static Layer *s_background_layer, *s_date_layer, *s_hands_layer;
 static TextLayer *s_weekday_label, *s_day_label, *s_month_label;
 static char s_weekday_buffer[16], s_date_buffer[16], s_month_buffer[16];
 static GPath *s_minute_arrow, *s_hour_arrow, *s_tick_paths[NUM_CLOCK_TICKS];
+bool message = false;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////// Callbacks ///////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void unobstructed_change(AnimationProgress progress, void* data) {
-	GRect bounds = layer_get_unobstructed_bounds(window_get_root_layer(window));
-
-	GPoint center = grect_center_point(&bounds);
-	gpath_move_to(s_minute_arrow, center);
-	gpath_move_to(s_hour_arrow, center);
-	
-	layer_set_frame(text_layer_get_layer(s_weekday_label),GRect(10, bounds.size.h * 6/32, bounds.size.w - 20, 30)); // Top
-	layer_set_frame(text_layer_get_layer(s_day_label),GRect(bounds.size.w - 26, bounds.size.h/2 - 15, 25, 30));
-	layer_set_frame(text_layer_get_layer(s_month_label),GRect(10, bounds.size.h * 5/8, bounds.size.w - 20, 30));
-}
 
 static void bluetooth_callback(bool connected) {
 // 	char *select_bluetooth_disconnect = "";
@@ -49,7 +38,7 @@ static void bluetooth_callback(bool connected) {
 		vibes_long_pulse();
 // 		}	// Default
 	} else {														// Connected
-		if(colour_background || colour_weekday || colour_month) {
+		if(message) {
 			text_layer_set_text_color(s_weekday_label, PBL_IF_BW_ELSE(gcolor_legible_over(GColorFromHEX(colour_background)), GColorFromHEX(colour_weekday)));	// Set Top Colour
 			text_layer_set_text_color(s_month_label, PBL_IF_BW_ELSE(gcolor_legible_over(GColorFromHEX(colour_background)), GColorFromHEX(colour_month)));		// Set Bottom Colour
 		} else {	
@@ -60,6 +49,7 @@ static void bluetooth_callback(bool connected) {
 }
 
 static void inbox_received_handler(DictionaryIterator *iter, void *context) {
+	message = true;
 // Colours
 	Tuple *colour_background_t	= dict_find(iter, MESSAGE_KEY_COLOUR_BACKGROUND);
 	int colour_background		= colour_background_t->value->int32;
@@ -93,8 +83,20 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
 	layer_mark_dirty(s_background_layer); 	// Update background
 	layer_mark_dirty(s_hands_layer); 		// Update Hands
 	text_layer_set_text_color(s_day_label, PBL_IF_BW_ELSE(gcolor_legible_over(GColorFromHEX(colour_background)), GColorFromHEX(colour_day)));
-	
 	bluetooth_callback(connection_service_peek_pebble_app_connection());
+//	APP_LOG(APP_LOG_LEVEL_DEBUG, select_battery_percent);
+}
+
+void unobstructed_change(AnimationProgress progress, void* data) {
+	GRect bounds = layer_get_unobstructed_bounds(window_get_root_layer(window));
+
+	GPoint center = grect_center_point(&bounds);
+	gpath_move_to(s_minute_arrow, center);
+	gpath_move_to(s_hour_arrow, center);
+	
+	layer_set_frame(text_layer_get_layer(s_weekday_label),GRect(10, bounds.size.h * 6/32, bounds.size.w - 20, 30)); // Top
+	layer_set_frame(text_layer_get_layer(s_day_label),GRect(bounds.size.w - 26, bounds.size.h/2 - 15, 25, 30));
+	layer_set_frame(text_layer_get_layer(s_month_label),GRect(10, bounds.size.h * 5/8, bounds.size.w - 20, 30));
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
