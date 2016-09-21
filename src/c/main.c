@@ -1,7 +1,7 @@
 #include <pebble.h>
 #include "main.h"
 
-uint32_t key = 0;	// Used to determine whether AppMessages have been recieved
+uint32_t received = 0;	// Used to determine whether AppMessages have been recieved
 
 static Window *window;
 static Layer *s_background_layer, *s_date_layer, *s_hands_layer;
@@ -17,10 +17,9 @@ static void bluetooth_callback(bool connected) {
 // 	char *select_bluetooth_disconnect = "";
 // 	persist_read_string(MESSAGE_KEY_SELECT_BLUETOOTH_DISCONNECT,select_bluetooth_disconnect,5);
 // 	int select_bluetooth_disconnect_int = atoi(select_bluetooth_disconnect);
-	bool message = persist_read_bool(key);	
 	
 	if(!connected) {												
-		if(message) {	// Disconected with config
+		if(persist_read_bool(received)) {	// Disconected with config
 			GColor bg_colour = GColorFromHEX(persist_read_int(MESSAGE_KEY_COLOUR_BACKGROUND));
 			GColor bt_colour = GColorFromHEX(persist_read_int(MESSAGE_KEY_COLOUR_BLUETOOTH));
 			text_layer_set_text_color(s_weekday_label, PBL_IF_BW_ELSE(gcolor_legible_over(bg_colour), bt_colour));	// Set Top Colour
@@ -37,7 +36,7 @@ static void bluetooth_callback(bool connected) {
 		vibes_long_pulse();
 // 		}	// Default
 	} else {														// Connected
-		if(message) {
+	if(persist_read_bool(received)) {
 			GColor bg_colour = GColorFromHEX(persist_read_int(MESSAGE_KEY_COLOUR_BACKGROUND));
 			GColor wk_colour = GColorFromHEX(persist_read_int(MESSAGE_KEY_COLOUR_WEEKDAY));
 			GColor mo_colour = GColorFromHEX(persist_read_int(MESSAGE_KEY_COLOUR_MONTH));
@@ -51,7 +50,7 @@ static void bluetooth_callback(bool connected) {
 }
 
 static void inbox_received_handler(DictionaryIterator *iter, void *context) {
-	persist_write_bool(key, true);
+	persist_write_bool(received, true);
 // Colours
 	Tuple *colour_background_t	= dict_find(iter, MESSAGE_KEY_COLOUR_BACKGROUND);
 	int colour_background		= colour_background_t->value->int32;
@@ -105,10 +104,8 @@ void unobstructed_change(AnimationProgress progress, void* data) {
 //////////// update //////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void bg_update_proc(Layer *layer, GContext *ctx) {
-	bool message = persist_read_bool(key);	
-	
-	if(message) {
+static void bg_update_proc(Layer *layer, GContext *ctx) {	
+	if(persist_read_bool(received)) {
 		GColor bg_colour = GColorFromHEX(persist_read_int(MESSAGE_KEY_COLOUR_BACKGROUND));
 		graphics_context_set_fill_color(ctx, bg_colour);		// Background
 		graphics_fill_rect(ctx, layer_get_bounds(layer), 0, GCornerNone);
@@ -127,14 +124,13 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
 	GRect bounds = layer_get_unobstructed_bounds(layer);
 	time_t now = time(NULL);
 	struct tm *t = localtime(&now);
-	bool message = persist_read_bool(key);
 
 // Hour
 	GColor bg_colour = GColorFromHEX(persist_read_int(MESSAGE_KEY_COLOUR_BACKGROUND));
 	GColor hr_colour = GColorFromHEX(persist_read_int(MESSAGE_KEY_COLOUR_HAND_HOUR));
 	GColor mn_colour = GColorFromHEX(persist_read_int(MESSAGE_KEY_COLOUR_HAND_MINUTE));
 	
-	if(message) {
+	if(persist_read_bool(received)) {
 		graphics_context_set_fill_color(ctx, PBL_IF_BW_ELSE(gcolor_legible_over(bg_colour), hr_colour));
 		graphics_context_set_stroke_color(ctx, bg_colour);
 	} else {
@@ -147,7 +143,7 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
 	gpath_draw_outline(ctx, s_hour_arrow);
 
 // Minute
-	if(message) {
+	if(persist_read_bool(received)) {
 		graphics_context_set_fill_color(ctx, PBL_IF_BW_ELSE(gcolor_legible_over(bg_colour), mn_colour));
 		graphics_context_set_stroke_color(ctx, bg_colour);
 	} else {
@@ -160,7 +156,7 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
 	gpath_draw_outline(ctx, s_minute_arrow);
 
 // Dot
-	if(message) {
+	if(persist_read_bool(received)) {
 		graphics_context_set_fill_color(ctx, PBL_IF_BW_ELSE(gcolor_legible_over(bg_colour), mn_colour));
 	} else {
 		graphics_context_set_fill_color(ctx, GColorWhite);
@@ -232,8 +228,7 @@ static void window_load(Window *window) {
 	text_layer_set_text(s_month_label, s_month_buffer);
 	
 // Set Colours
-	bool message = persist_read_bool(key);	
-	if(message) {
+	if(persist_read_bool(received)) {
 		text_layer_set_text_color(s_day_label, GColorFromHEX(persist_read_int(MESSAGE_KEY_COLOUR_DAY)));
 	} else {
 		text_layer_set_text_color(s_day_label, GColorWhite);
