@@ -1,12 +1,13 @@
 #include <pebble.h>
 #include "main.h"
 
+uint32_t key = 0;
+
 static Window *window;
 static Layer *s_background_layer, *s_date_layer, *s_hands_layer;
 static TextLayer *s_weekday_label, *s_day_label, *s_month_label;
 static char s_weekday_buffer[16], s_date_buffer[16], s_month_buffer[16];
 static GPath *s_minute_arrow, *s_hour_arrow, *s_tick_paths[NUM_CLOCK_TICKS];
-bool message = false;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////// Callbacks ///////////////////////////////////////////////////////////////////////////////
@@ -17,13 +18,15 @@ static void bluetooth_callback(bool connected) {
 // 	persist_read_string(MESSAGE_KEY_SELECT_BLUETOOTH_DISCONNECT,select_bluetooth_disconnect,5);
 // 	int select_bluetooth_disconnect_int = atoi(select_bluetooth_disconnect);
 	
+	bool message = persist_read_bool(key);	
+	
 	int colour_background = persist_read_int(MESSAGE_KEY_COLOUR_BACKGROUND);
 	int colour_weekday = persist_read_int(MESSAGE_KEY_COLOUR_WEEKDAY);
 	int colour_month = persist_read_int(MESSAGE_KEY_COLOUR_MONTH);
 	int colour_bluetooth = persist_read_int(MESSAGE_KEY_COLOUR_BLUETOOTH);
 	
 	if(!connected) {												
-		if(colour_background || colour_bluetooth) {	// Disconected with config
+		if(message) {												// Disconected with config
 			text_layer_set_text_color(s_weekday_label, PBL_IF_BW_ELSE(gcolor_legible_over(GColorFromHEX(colour_background)), GColorFromHEX(colour_bluetooth)));	// Set Top Colour
 			text_layer_set_text_color(s_month_label, PBL_IF_BW_ELSE(gcolor_legible_over(GColorFromHEX(colour_background)), GColorFromHEX(colour_bluetooth)));		// Set Bottom Colour
 		} else { 									// Disconnected and no config
@@ -49,7 +52,7 @@ static void bluetooth_callback(bool connected) {
 }
 
 static void inbox_received_handler(DictionaryIterator *iter, void *context) {
-	message = true;
+	persist_write_bool(key, true);
 // Colours
 	Tuple *colour_background_t	= dict_find(iter, MESSAGE_KEY_COLOUR_BACKGROUND);
 	int colour_background		= colour_background_t->value->int32;
@@ -104,8 +107,10 @@ void unobstructed_change(AnimationProgress progress, void* data) {
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void bg_update_proc(Layer *layer, GContext *ctx) {
+	bool message = persist_read_bool(key);	
+	
 	int colour_background = persist_read_int(MESSAGE_KEY_COLOUR_BACKGROUND);
-	if(colour_background) {
+	if(message) {
 		graphics_context_set_fill_color(ctx, GColorFromHEX(colour_background));		// Background
 		graphics_fill_rect(ctx, layer_get_bounds(layer), 0, GCornerNone);
 		graphics_context_set_fill_color(ctx, gcolor_legible_over(GColorFromHEX(colour_background)));		// Markers
@@ -121,16 +126,16 @@ static void bg_update_proc(Layer *layer, GContext *ctx) {
 
 static void hands_update_proc(Layer *layer, GContext *ctx) {
 	GRect bounds = layer_get_unobstructed_bounds(layer);
-
 	time_t now = time(NULL);
 	struct tm *t = localtime(&now);
+	bool message = persist_read_bool(key);
 
 // Hour
 	int colour_background = persist_read_int(MESSAGE_KEY_COLOUR_BACKGROUND);
 	int colour_hand_hour = persist_read_int(MESSAGE_KEY_COLOUR_HAND_HOUR);
 	int colour_hand_minute = persist_read_int(MESSAGE_KEY_COLOUR_HAND_MINUTE);
 	
-	if(colour_background || colour_hand_hour) {
+	if(message) {
 		graphics_context_set_fill_color(ctx, PBL_IF_BW_ELSE(gcolor_legible_over(GColorFromHEX(colour_background)), GColorFromHEX(colour_hand_hour)));
 		graphics_context_set_stroke_color(ctx, GColorFromHEX(colour_background));
 	} else {
@@ -143,7 +148,7 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
 	gpath_draw_outline(ctx, s_hour_arrow);
 
 // Minute
-	if(colour_background || colour_hand_minute) {
+	if(message) {
 		graphics_context_set_fill_color(ctx, PBL_IF_BW_ELSE(gcolor_legible_over(GColorFromHEX(colour_background)), GColorFromHEX(colour_hand_minute)));
 		graphics_context_set_stroke_color(ctx, GColorFromHEX(colour_background));
 	} else {
@@ -156,7 +161,7 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
 	gpath_draw_outline(ctx, s_minute_arrow);
 
 // Dot
-	if(colour_background || colour_hand_hour) {
+	if(message) {
 		graphics_context_set_fill_color(ctx, PBL_IF_BW_ELSE(gcolor_legible_over(GColorFromHEX(colour_background)), GColorFromHEX(colour_hand_minute)));
 	} else {
 		graphics_context_set_fill_color(ctx, GColorWhite);
