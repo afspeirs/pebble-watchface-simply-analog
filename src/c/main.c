@@ -1,7 +1,7 @@
 #include <pebble.h>
 #include "main.h"
 
-uint32_t key = 0;
+uint32_t key = 0;	// Used to determine whether AppMessages have been recieved
 
 static Window *window;
 static Layer *s_background_layer, *s_date_layer, *s_hands_layer;
@@ -17,18 +17,14 @@ static void bluetooth_callback(bool connected) {
 // 	char *select_bluetooth_disconnect = "";
 // 	persist_read_string(MESSAGE_KEY_SELECT_BLUETOOTH_DISCONNECT,select_bluetooth_disconnect,5);
 // 	int select_bluetooth_disconnect_int = atoi(select_bluetooth_disconnect);
-	
 	bool message = persist_read_bool(key);	
 	
-	int colour_background = persist_read_int(MESSAGE_KEY_COLOUR_BACKGROUND);
-	int colour_weekday = persist_read_int(MESSAGE_KEY_COLOUR_WEEKDAY);
-	int colour_month = persist_read_int(MESSAGE_KEY_COLOUR_MONTH);
-	int colour_bluetooth = persist_read_int(MESSAGE_KEY_COLOUR_BLUETOOTH);
-	
 	if(!connected) {												
-		if(message) {												// Disconected with config
-			text_layer_set_text_color(s_weekday_label, PBL_IF_BW_ELSE(gcolor_legible_over(GColorFromHEX(colour_background)), GColorFromHEX(colour_bluetooth)));	// Set Top Colour
-			text_layer_set_text_color(s_month_label, PBL_IF_BW_ELSE(gcolor_legible_over(GColorFromHEX(colour_background)), GColorFromHEX(colour_bluetooth)));		// Set Bottom Colour
+		if(message) {	// Disconected with config
+			GColor bg_colour = GColorFromHEX(persist_read_int(MESSAGE_KEY_COLOUR_BACKGROUND));
+			GColor bt_colour = GColorFromHEX(persist_read_int(MESSAGE_KEY_COLOUR_BLUETOOTH));
+			text_layer_set_text_color(s_weekday_label, PBL_IF_BW_ELSE(gcolor_legible_over(bg_colour), bt_colour));	// Set Top Colour
+			text_layer_set_text_color(s_month_label, PBL_IF_BW_ELSE(gcolor_legible_over(bg_colour), bt_colour));	// Set Bottom Colour
 		} else { 									// Disconnected and no config
 			text_layer_set_text_color(s_weekday_label, PBL_IF_BW_ELSE(GColorBlack, GColorRed));	// Set Top Colour
 			text_layer_set_text_color(s_month_label, PBL_IF_BW_ELSE(GColorBlack, GColorRed));	// Set Bottom Colour
@@ -42,8 +38,11 @@ static void bluetooth_callback(bool connected) {
 // 		}	// Default
 	} else {														// Connected
 		if(message) {
-			text_layer_set_text_color(s_weekday_label, PBL_IF_BW_ELSE(gcolor_legible_over(GColorFromHEX(colour_background)), GColorFromHEX(colour_weekday)));	// Set Top Colour
-			text_layer_set_text_color(s_month_label, PBL_IF_BW_ELSE(gcolor_legible_over(GColorFromHEX(colour_background)), GColorFromHEX(colour_month)));		// Set Bottom Colour
+			GColor bg_colour = GColorFromHEX(persist_read_int(MESSAGE_KEY_COLOUR_BACKGROUND));
+			GColor wk_colour = GColorFromHEX(persist_read_int(MESSAGE_KEY_COLOUR_WEEKDAY));
+			GColor mo_colour = GColorFromHEX(persist_read_int(MESSAGE_KEY_COLOUR_MONTH));
+			text_layer_set_text_color(s_weekday_label, PBL_IF_BW_ELSE(gcolor_legible_over(bg_colour), wk_colour));	// Set Top Colour
+			text_layer_set_text_color(s_month_label, PBL_IF_BW_ELSE(gcolor_legible_over(bg_colour), mo_colour));	// Set Bottom Colour
 		} else {	
 			text_layer_set_text_color(s_weekday_label, GColorWhite);
 			text_layer_set_text_color(s_month_label, GColorWhite);
@@ -109,11 +108,11 @@ void unobstructed_change(AnimationProgress progress, void* data) {
 static void bg_update_proc(Layer *layer, GContext *ctx) {
 	bool message = persist_read_bool(key);	
 	
-	int colour_background = persist_read_int(MESSAGE_KEY_COLOUR_BACKGROUND);
 	if(message) {
-		graphics_context_set_fill_color(ctx, GColorFromHEX(colour_background));		// Background
+		GColor bg_colour = GColorFromHEX(persist_read_int(MESSAGE_KEY_COLOUR_BACKGROUND));
+		graphics_context_set_fill_color(ctx, bg_colour);		// Background
 		graphics_fill_rect(ctx, layer_get_bounds(layer), 0, GCornerNone);
-		graphics_context_set_fill_color(ctx, gcolor_legible_over(GColorFromHEX(colour_background)));		// Markers
+		graphics_context_set_fill_color(ctx, gcolor_legible_over(bg_colour));		// Markers
 	} else {
 		graphics_context_set_fill_color(ctx, GColorBlack);		// Background
 		graphics_fill_rect(ctx, layer_get_bounds(layer), 0, GCornerNone);
@@ -131,13 +130,13 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
 	bool message = persist_read_bool(key);
 
 // Hour
-	int colour_background = persist_read_int(MESSAGE_KEY_COLOUR_BACKGROUND);
-	int colour_hand_hour = persist_read_int(MESSAGE_KEY_COLOUR_HAND_HOUR);
-	int colour_hand_minute = persist_read_int(MESSAGE_KEY_COLOUR_HAND_MINUTE);
+	GColor bg_colour = GColorFromHEX(persist_read_int(MESSAGE_KEY_COLOUR_BACKGROUND));
+	GColor hr_colour = GColorFromHEX(persist_read_int(MESSAGE_KEY_COLOUR_HAND_HOUR));
+	GColor mn_colour = GColorFromHEX(persist_read_int(MESSAGE_KEY_COLOUR_HAND_MINUTE));
 	
 	if(message) {
-		graphics_context_set_fill_color(ctx, PBL_IF_BW_ELSE(gcolor_legible_over(GColorFromHEX(colour_background)), GColorFromHEX(colour_hand_hour)));
-		graphics_context_set_stroke_color(ctx, GColorFromHEX(colour_background));
+		graphics_context_set_fill_color(ctx, PBL_IF_BW_ELSE(gcolor_legible_over(bg_colour), hr_colour));
+		graphics_context_set_stroke_color(ctx, bg_colour);
 	} else {
 		graphics_context_set_fill_color(ctx, GColorWhite);
 		graphics_context_set_stroke_color(ctx, GColorBlack);
@@ -149,8 +148,8 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
 
 // Minute
 	if(message) {
-		graphics_context_set_fill_color(ctx, PBL_IF_BW_ELSE(gcolor_legible_over(GColorFromHEX(colour_background)), GColorFromHEX(colour_hand_minute)));
-		graphics_context_set_stroke_color(ctx, GColorFromHEX(colour_background));
+		graphics_context_set_fill_color(ctx, PBL_IF_BW_ELSE(gcolor_legible_over(bg_colour), mn_colour));
+		graphics_context_set_stroke_color(ctx, bg_colour);
 	} else {
 		graphics_context_set_fill_color(ctx, GColorWhite);
 		graphics_context_set_stroke_color(ctx, GColorBlack);
@@ -162,7 +161,7 @@ static void hands_update_proc(Layer *layer, GContext *ctx) {
 
 // Dot
 	if(message) {
-		graphics_context_set_fill_color(ctx, PBL_IF_BW_ELSE(gcolor_legible_over(GColorFromHEX(colour_background)), GColorFromHEX(colour_hand_minute)));
+		graphics_context_set_fill_color(ctx, PBL_IF_BW_ELSE(gcolor_legible_over(bg_colour), mn_colour));
 	} else {
 		graphics_context_set_fill_color(ctx, GColorWhite);
 	}
@@ -233,10 +232,9 @@ static void window_load(Window *window) {
 	text_layer_set_text(s_month_label, s_month_buffer);
 	
 // Set Colours
-	int colour_background = persist_read_int(MESSAGE_KEY_COLOUR_BACKGROUND);
-	int colour_day = persist_read_int(MESSAGE_KEY_COLOUR_DAY);
-	if(colour_background || colour_day) {
-		text_layer_set_text_color(s_day_label, GColorFromHEX(colour_day));
+	bool message = persist_read_bool(key);	
+	if(message) {
+		text_layer_set_text_color(s_day_label, GColorFromHEX(persist_read_int(MESSAGE_KEY_COLOUR_DAY)));
 	} else {
 		text_layer_set_text_color(s_day_label, GColorWhite);
 	}
