@@ -13,10 +13,10 @@
         "enableMultiJS": true,
         "messageKeys": [
             "COLOUR_BACKGROUND",
-            "COLOUR_HAND_HOUR",
-            "COLOUR_HAND_MINUTE",
+            "COLOUR_HOUR",
+            "COLOUR_MINUTE",
             "COLOUR_WEEKDAY",
-            "COLOUR_DAY",
+            "COLOUR_DATE",
             "COLOUR_MONTH",
             "COLOUR_BLUETOOTH"
         ],
@@ -63,5 +63,5 @@
             "watchface": true
         }
     },
-    "version": "0.11.0"
+    "version": "0.13.0"
 }
