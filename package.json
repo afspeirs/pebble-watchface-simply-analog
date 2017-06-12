@@ -18,28 +18,57 @@
             "COLOUR_WEEKDAY",
             "COLOUR_DATE",
             "COLOUR_MONTH",
-            "COLOUR_BLUETOOTH"
+            "TOGGLE_BLUETOOTH",
+            "SELECT_BLUETOOTH",
+            "TOGGLE_BLUETOOTH_QUIET_TIME",
+            "SELECT_BATTERY_PERCENT"
         ],
         "projectType": "native",
         "resources": {
             "media": [
                 {
-                    "file": "images/MenuImage.png",
-                    "menuIcon": true,
-                    "name": "IMAGE_MENU_IMAGE",
+                    "file": "images/IMG_QuietTime_Black.png",
+                    "name": "IMAGE_QUIET_TIME_BLACK",
                     "storageFormat": "png",
                     "targetPlatforms": null,
                     "type": "bitmap"
                 },
                 {
-                    "file": "images/Battery White",
+                    "file": "images/IMG_QuietTime_White.png",
+                    "name": "IMAGE_QUIET_TIME_WHITE",
+                    "targetPlatforms": null,
+                    "type": "bitmap"
+                },
+                {
+                    "file": "images/IMG_Bluetooth_White.png",
+                    "name": "IMAGE_BLUETOOTH_WHITE",
+                    "targetPlatforms": null,
+                    "type": "bitmap"
+                },
+                {
+                    "file": "images/IMG_Bluetooth_Black.png",
+                    "name": "IMAGE_BLUETOOTH_BLACK",
+                    "storageFormat": "png",
+                    "targetPlatforms": null,
+                    "type": "bitmap"
+                },
+                {
+                    "file": "images/IMG_Battery_White.png",
                     "name": "IMAGE_BATTERY_WHITE",
                     "targetPlatforms": null,
                     "type": "bitmap"
                 },
                 {
-                    "file": "images/Battery Black",
+                    "file": "images/IMG_Battery_Black.png",
                     "name": "IMAGE_BATTERY_BLACK",
+                    "storageFormat": "png",
+                    "targetPlatforms": null,
+                    "type": "bitmap"
+                },
+                {
+                    "file": "images/MenuImage.png",
+                    "menuIcon": true,
+                    "name": "IMAGE_MENU_IMAGE",
                     "storageFormat": "png",
                     "targetPlatforms": null,
                     "type": "bitmap"
@@ -63,5 +92,5 @@
             "watchface": true
         }
     },
-    "version": "0.13.0"
+    "version": "0.14.0"
 }

@@ -8,6 +8,8 @@ static Layer *s_background_layer, *s_date_layer, *s_hands_layer;
 static TextLayer *s_weekday_label, *s_date_label, *s_month_label;
 static char s_weekday_buffer[16], s_date_buffer[16], s_month_buffer[16];
 static GPath *s_minute_arrow, *s_hour_arrow, *s_tick_paths[NUM_CLOCK_TICKS];
+static BitmapLayer *s_layer_battery, *s_layer_bluetooth, *s_layer_quiet;
+static GBitmap *s_bitmap_battery, *s_bitmap_bluetooth, *s_bitmap_quiet;
 static bool appStarted = false;
 
 typedef struct ClaySettings {
@@ -74,36 +76,47 @@ void setColours() {
 //////////// Callbacks ///////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static void bluetooth_callback(bool connected) {
-// 	if(!connected) {												
-// 		if(persist_read_bool(received)) {   // Disconected with config
-// 			GColor bg_colour = GColorFromHEX(persist_read_int(MESSAGE_KEY_COLOUR_BACKGROUND));
-// 			GColor bt_colour = GColorFromHEX(persist_read_int(MESSAGE_KEY_COLOUR_BLUETOOTH));
-// 			text_layer_set_text_color(s_weekday_label, PBL_IF_BW_ELSE(gcolor_legible_over(bg_colour), bt_colour));    // Set Top Colour
-// 			text_layer_set_text_color(s_month_label, PBL_IF_BW_ELSE(gcolor_legible_over(bg_colour), bt_colour));      // Set Bottom Colour
-// 		} else {                            // Disconnected and no config
-// 			text_layer_set_text_color(s_weekday_label, PBL_IF_BW_ELSE(GColorBlack, GColorRed));   // Set Top Colour
-// 			text_layer_set_text_color(s_month_label, PBL_IF_BW_ELSE(GColorBlack, GColorRed));     // Set Bottom Colour
-// 		}
-// 		vibes_long_pulse();
-// 	} else {                        // Connected
-// 		if(persist_read_bool(received)) {
-// 			GColor bg_colour = GColorFromHEX(persist_read_int(MESSAGE_KEY_COLOUR_BACKGROUND));
-// 			GColor wk_colour = GColorFromHEX(persist_read_int(MESSAGE_KEY_COLOUR_WEEKDAY));
-// 			GColor mo_colour = GColorFromHEX(persist_read_int(MESSAGE_KEY_COLOUR_MONTH));
-// 			text_layer_set_text_color(s_weekday_label, PBL_IF_BW_ELSE(gcolor_legible_over(bg_colour), wk_colour));	// Set Top Colour
-// 			text_layer_set_text_color(s_month_label, PBL_IF_BW_ELSE(gcolor_legible_over(bg_colour), mo_colour));	// Set Bottom Colour
-// 		} else {	
-// 			text_layer_set_text_color(s_weekday_label, GColorWhite);
-// 			text_layer_set_text_color(s_month_label, GColorWhite);
-// 		}
-// 	}
+static void battery_callback(BatteryChargeState state) {
+	if(state.charge_percent <= settings.SelectBatteryPercent) {
+		getIcon(s_bitmap_battery, s_layer_battery, RESOURCE_ID_IMAGE_BATTERY_BLACK, RESOURCE_ID_IMAGE_BATTERY_WHITE);
+		layer_set_hidden(bitmap_layer_get_layer(s_layer_battery), false);	// Visible
+	} else {
+		layer_set_hidden(bitmap_layer_get_layer(s_layer_battery), true);	// Hidden
+	}
+	
+	// Move battery when in quiet time, and move to original location if not
+	if(quiet_time_is_active()) {
+		#if PBL_DISPLAY_HEIGHT == 180			// Chalk
+			layer_set_frame(bitmap_layer_get_layer(s_layer_battery),GRect(84, 17, 13,  6));	// battery
+		#else									// Aplite, Basalt, Diorite
+			layer_set_frame(bitmap_layer_get_layer(s_layer_battery),GRect(22, 4, 13,  6));	// battery
+		#endif
+	} else {
+		#if PBL_DISPLAY_HEIGHT == 180			// Chalk
+			layer_set_frame(bitmap_layer_get_layer(s_layer_battery),GRect(84, 10, 13,  6));	// battery
+		#else									// Aplite, Basalt, Diorite
+			layer_set_frame(bitmap_layer_get_layer(s_layer_battery),GRect(6, 4, 13,  6));	// battery
+		#endif
+	}
 }
 
-
-
-
-
+static void bluetooth_callback(bool connected) {													  	
+	if(!connected) {
+		if(appStarted && !(quiet_time_is_active() && !settings.ToggleBluetoothQuietTime)) {
+			if(settings.SelectBluetooth == 0) { }								// No vibration 
+			else if(settings.SelectBluetooth == 1) { vibes_short_pulse(); }		// Short vibration
+			else if(settings.SelectBluetooth == 2) { vibes_long_pulse(); }		// Long vibration
+			else if(settings.SelectBluetooth == 3) { vibes_double_pulse(); }	// Double vibration
+			else { vibes_long_pulse(); }					 // Default			// Long Vibration
+		}
+		if(settings.ToggleBluetooth) {
+			getIcon(s_bitmap_bluetooth, s_layer_bluetooth, RESOURCE_ID_IMAGE_BLUETOOTH_BLACK, RESOURCE_ID_IMAGE_BLUETOOTH_WHITE);
+			layer_set_hidden(bitmap_layer_get_layer(s_layer_bluetooth), false);	// Visible	
+		}
+	} else {
+		layer_set_hidden(bitmap_layer_get_layer(s_layer_bluetooth), true);	// Hidden
+	}	
+}
 
 static void inbox_received_handler(DictionaryIterator *iter, void *context) {
 // Colours
@@ -119,35 +132,32 @@ static void inbox_received_handler(DictionaryIterator *iter, void *context) {
 	if(dt_colour_t) { settings.ColourDate = GColorFromHEX(dt_colour_t->value->int32); }
 	Tuple *month_colour_t = dict_find(iter, MESSAGE_KEY_COLOUR_MONTH);
 	if(month_colour_t) { settings.ColourMonth = GColorFromHEX(month_colour_t->value->int32); }
-
 // Bluetooth
-// 	Tuple *bt_toggle_t = dict_find(iter, MESSAGE_KEY_TOGGLE_BLUETOOTH);
-// 	if(bt_toggle_t) { settings.ToggleBluetooth = bt_toggle_t->value->int32 == 1; }
-// 	Tuple *bq_toggle_t = dict_find(iter, MESSAGE_KEY_TOGGLE_BLUETOOTH_QUIET_TIME);
-// 	if(bq_toggle_t) { settings.ToggleBluetoothQuietTime = bq_toggle_t->value->int32 == 1; }
-// 	Tuple *bt_select_t = dict_find(iter, MESSAGE_KEY_SELECT_BLUETOOTH);
-// 	if(bt_select_t) { settings.SelectBluetooth = atoi(bt_select_t->value->cstring); }
+	Tuple *bt_toggle_t = dict_find(iter, MESSAGE_KEY_TOGGLE_BLUETOOTH);
+	if(bt_toggle_t) { settings.ToggleBluetooth = bt_toggle_t->value->int32 == 1; }
+	Tuple *bq_toggle_t = dict_find(iter, MESSAGE_KEY_TOGGLE_BLUETOOTH_QUIET_TIME);
+	if(bq_toggle_t) { settings.ToggleBluetoothQuietTime = bq_toggle_t->value->int32 == 1; }
+	Tuple *bt_select_t = dict_find(iter, MESSAGE_KEY_SELECT_BLUETOOTH);
+	if(bt_select_t) { settings.SelectBluetooth = atoi(bt_select_t->value->cstring); }
 // Battery
-// 	Tuple *bp_select_t = dict_find(iter, MESSAGE_KEY_SELECT_BATTERY_PERCENT);
-// 	if(bp_select_t) { settings.SelectBatteryPercent = atoi(bp_select_t->value->cstring); }
-// 	Tuple *bd_toggle_t = dict_find(iter, MESSAGE_KEY_TOGGLE_POWER_SAVE);
-// 	if(bd_toggle_t) { settings.TogglePowerSave = bd_toggle_t->value->int32 == 1; }
+	Tuple *bp_select_t = dict_find(iter, MESSAGE_KEY_SELECT_BATTERY_PERCENT);
+	if(bp_select_t) { settings.SelectBatteryPercent = atoi(bp_select_t->value->cstring); }
 	
   	persist_write_data(SETTINGS_KEY, &settings, sizeof(settings));		// Write settings to persistent storage
 	
 // Update watchface with new settings
-// 	battery_callback(battery_state_service_peek());
+	battery_callback(battery_state_service_peek());
 	appStarted = false;
 	bluetooth_callback(connection_service_peek_pebble_app_connection());
 	appStarted = true;
 	setColours();
 
-// 	if(quiet_time_is_active()) {
-// 		getIcon(s_bitmap_quiet, s_layer_quiet, RESOURCE_ID_IMAGE_QUIET_TIME_BLACK, RESOURCE_ID_IMAGE_QUIET_TIME_WHITE);
-// 		layer_set_hidden(bitmap_layer_get_layer(s_layer_quiet), false);	// Visible
-// 	} else {
-// 		layer_set_hidden(bitmap_layer_get_layer(s_layer_quiet), true);	// Hidden
-// 	}
+	if(quiet_time_is_active()) {
+		getIcon(s_bitmap_quiet, s_layer_quiet, RESOURCE_ID_IMAGE_QUIET_TIME_BLACK, RESOURCE_ID_IMAGE_QUIET_TIME_WHITE);
+		layer_set_hidden(bitmap_layer_get_layer(s_layer_quiet), false);	// Visible
+	} else {
+		layer_set_hidden(bitmap_layer_get_layer(s_layer_quiet), true);	// Hidden
+	}
 }
 
 void unobstructed_change(AnimationProgress progress, void* data) {
@@ -241,9 +251,45 @@ static void window_load(Window *window) {
 	layer_add_child(window_layer, s_date_layer);
 	
 // Locations
-	s_weekday_label = text_layer_create(GRect(10, bounds.size.h * 6/32, bounds.size.w - 20, 30)); // Top
-	s_date_label = text_layer_create(GRect(bounds.size.w - 26, bounds.size.h/2 - 15, 25, 30));
-	s_month_label = text_layer_create(GRect(10, bounds.size.h * 5/8, bounds.size.w - 20, 30));
+	s_weekday_label = text_layer_create(GRect(10, bounds.size.h * 6/32, bounds.size.w - 20, 30)); // Weekday
+	s_date_label = text_layer_create(GRect(bounds.size.w - 26, bounds.size.h/2 - 15, 25, 30));    // Date
+	s_month_label = text_layer_create(GRect(10, bounds.size.h * 5/8, bounds.size.w - 20, 30));    // Month
+	s_layer_bluetooth = bitmap_layer_create(GRect(bounds.size.w-13, 3, 7,  11));                  // Bluetooth
+
+// Show Quiet Time icon when active, and move battery 
+	if(quiet_time_is_active()) {
+		s_layer_battery		= bitmap_layer_create(GRect(22, 4, 13,  6));	// battery
+		s_layer_quiet		= bitmap_layer_create(GRect( 6, 2, 10, 10));	// quiet
+
+		getIcon(s_bitmap_quiet, s_layer_quiet, RESOURCE_ID_IMAGE_QUIET_TIME_BLACK, RESOURCE_ID_IMAGE_QUIET_TIME_WHITE);
+		layer_set_hidden(bitmap_layer_get_layer(s_layer_quiet), false);	// Visible
+	} else {
+		s_layer_battery	= bitmap_layer_create(GRect(6, 4, 13,  6));		// battery
+		s_layer_quiet	= bitmap_layer_create(GRect(6, 2, 10, 10));		// quiet
+
+		layer_set_hidden(bitmap_layer_get_layer(s_layer_quiet), true);	// Hidden
+	}
+
+// Battery Icon
+	layer_mark_dirty(bitmap_layer_get_layer(s_layer_battery));
+	#if defined(PBL_COLOR)
+		bitmap_layer_set_compositing_mode(s_layer_battery, GCompOpSet);	
+	#endif
+	layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(s_layer_battery));
+
+// Bluetooth Icon
+	layer_mark_dirty(bitmap_layer_get_layer(s_layer_bluetooth));
+	#if defined(PBL_COLOR)
+		bitmap_layer_set_compositing_mode(s_layer_bluetooth, GCompOpSet);	
+	#endif
+	layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(s_layer_bluetooth));
+	
+// Quiet Time Icon
+	layer_mark_dirty(bitmap_layer_get_layer(s_layer_quiet));
+	#if defined(PBL_COLOR)
+		bitmap_layer_set_compositing_mode(s_layer_quiet, GCompOpSet);	
+	#endif
+	layer_add_child(window_get_root_layer(window), bitmap_layer_get_layer(s_layer_quiet));
 
 // Weekday
 	text_layer_set_text_alignment(s_weekday_label, GTextAlignmentCenter);
@@ -270,7 +316,8 @@ static void window_load(Window *window) {
 	s_hands_layer = layer_create(bounds);
 	layer_set_update_proc(s_hands_layer, hands_update_proc);
 	layer_add_child(window_layer, s_hands_layer);
-	
+
+	battery_callback(battery_state_service_peek());
 	appStarted = false;
 	bluetooth_callback(connection_service_peek_pebble_app_connection());		// Sets date colours (and detects if a phone is connected)
 	appStarted = true;
@@ -325,10 +372,11 @@ static void init() {
   		.pebble_app_connection_handler = bluetooth_callback
 	});
 	
-	const int inbox_size = 128;
-	const int outbox_size = 128;
 	app_message_register_inbox_received(inbox_received_handler);
-	app_message_open(inbox_size, outbox_size);
+	app_message_open(256, 256);
+	
+	battery_state_service_subscribe(battery_callback);
+	battery_callback(battery_state_service_peek());
 	
 	tick_timer_service_subscribe(MINUTE_UNIT, handle_tick);
 }
@@ -336,6 +384,8 @@ static void init() {
 static void deinit() {
 	gpath_destroy(s_minute_arrow);
 	gpath_destroy(s_hour_arrow);
+	gbitmap_destroy(s_bitmap_bluetooth);
+	bitmap_layer_destroy(s_layer_bluetooth);
 
 	for (int i = 0; i < NUM_CLOCK_TICKS; ++i) {
 		gpath_destroy(s_tick_paths[i]);
