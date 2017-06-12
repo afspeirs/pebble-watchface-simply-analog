@@ -167,6 +167,11 @@ module.exports = [
 	{
 		"type": "submit",
 		"defaultValue": "Save"
-	}
+	},
+	{
+		"type": "text",
+		"defaultValue": " Version 0.13",
+	},
 ];
+
 

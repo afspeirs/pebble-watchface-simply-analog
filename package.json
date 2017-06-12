@@ -24,15 +24,9 @@
         "resources": {
             "media": [
                 {
-                    "characterRegex": "[0-9 a-zA-Z]",
-                    "file": "fonts/Bebas Neue Regular",
-                    "name": "FONT_BEBAS_NEUE_REGULAR_24",
-                    "targetPlatforms": null,
-                    "type": "font"
-                },
-                {
-                    "file": "images/Battery Black",
-                    "name": "IMAGE_BATTERY_BLACK",
+                    "file": "images/MenuImage.png",
+                    "menuIcon": true,
+                    "name": "IMAGE_MENU_IMAGE",
                     "storageFormat": "png",
                     "targetPlatforms": null,
                     "type": "bitmap"
@@ -44,12 +38,18 @@
                     "type": "bitmap"
                 },
                 {
-                    "file": "images/MenuImage.png",
-                    "menuIcon": true,
-                    "name": "IMAGE_MENU_IMAGE",
+                    "file": "images/Battery Black",
+                    "name": "IMAGE_BATTERY_BLACK",
                     "storageFormat": "png",
                     "targetPlatforms": null,
                     "type": "bitmap"
+                },
+                {
+                    "characterRegex": "[0-9 a-zA-Z]",
+                    "file": "fonts/Bebas Neue Regular",
+                    "name": "FONT_BEBAS_NEUE_REGULAR_24",
+                    "targetPlatforms": null,
+                    "type": "font"
                 }
             ]
         },
